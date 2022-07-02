@@ -1,16 +1,44 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TextInput } from 'react-native';
+import { Button, StyleSheet, Text, TextInput, View, } from 'react-native';
+import Realm from "realm";
+
+class EntrySchema extends Realm.Object {}
+EntrySchema.schema = {
+    name: 'Entry',
+    properties: {
+      date: 'date',
+      highlight: 'string',
+      focus: 'int',
+      energy: 'int',
+      didTried: 'string[]',
+      toTry: 'string[]',
+      grateful: 'string[]',
+    }
+};
+
+let realm = new Realm({schema: [EntrySchema], schemaVersion: 1});
 
 export default function App() {
-  const [highlight, onChangeHighlight] = React.useState('');
-  const [height, onChangeHeight] = React.useState(1);
-  const [focus, onChangeFocus] = React.useState(null);
-  const [energy, onChangeEnergy] = React.useState(null);
-  const [didTried, onChangeDidTried] = React.useState(null);
-  const [toTry, onChangeToTry] = React.useState(null);
-  const [grateful, onChangeGrateful] = React.useState(null);
+  let entries = realm.objects("Entry");
   const date = new Date(new Date().toLocaleDateString());
+  const currentEntry = entries. filtered(`date = '${date.toDateString}'`);
+  const [highlight, onChangeHighlight] = React.useState('');
+  const [focus, onChangeFocus] = React.useState(0);
+  const [energy, onChangeEnergy] = React.useState(0);
+  const [didTried, onChangeDidTried] = React.useState([]);
+  const [toTry, onChangeToTry] = React.useState([]);
+  const [grateful, onChangeGrateful] = React.useState([]);
+
+  const data = {
+    date: date.toDateString,
+    highlight,
+    focus,
+    energy,
+    didTried,
+    toTry,
+    grateful,
+  }
  
   return (
     <View style={styles.container}>
@@ -69,6 +97,11 @@ export default function App() {
           multiline={true}
         />
       </View>
+      <Button
+        onPress={() => console.log(data)}
+        title="Save"
+        color="#841584"
+      />
       <StatusBar style="auto" />
     </View>
   );
