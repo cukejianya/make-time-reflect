@@ -1,28 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Button, StyleSheet, Text, TextInput, View, } from 'react-native';
-import Realm from "realm";
-
-class EntrySchema extends Realm.Object {}
-EntrySchema.schema = {
-    name: 'Entry',
-    properties: {
-      date: 'date',
-      highlight: 'string',
-      focus: 'int',
-      energy: 'int',
-      didTried: 'string[]',
-      toTry: 'string[]',
-      grateful: 'string[]',
-    }
-};
-
-let realm = new Realm({schema: [EntrySchema], schemaVersion: 1});
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function App() {
-  let entries = realm.objects("Entry");
   const date = new Date(new Date().toLocaleDateString());
-  const currentEntry = entries. filtered(`date = '${date.toDateString}'`);
   const [highlight, onChangeHighlight] = React.useState('');
   const [focus, onChangeFocus] = React.useState(0);
   const [energy, onChangeEnergy] = React.useState(0);
@@ -30,16 +12,28 @@ export default function App() {
   const [toTry, onChangeToTry] = React.useState([]);
   const [grateful, onChangeGrateful] = React.useState([]);
 
+  useEffect(() => {
+    const getData = async () => {
+      const data = JSON.parse(await AsyncStorage.getItem(date.toDateString()));
+      onChangeHighlight(data.highlight)
+      onChangeFocus(data.focus)
+      onChangeEnergy(data.energy)
+      onChangeDidTried(data.didTried)
+      onChangeToTry(data.toTry)
+      onChangeGrateful(data.grateful)
+    }
+    getData().catch(console.error);;
+  }, []);
+
   const data = {
-    date: date.toDateString,
     highlight,
     focus,
     energy,
     didTried,
     toTry,
     grateful,
-  }
- 
+  };
+
   return (
     <View style={styles.container}>
       <Text>{date.toDateString()}</Text>
@@ -98,7 +92,9 @@ export default function App() {
         />
       </View>
       <Button
-        onPress={() => console.log(data)}
+        onPress={() => {
+          AsyncStorage.setItem(date.toDateString(), JSON.stringify(data));
+        }}
         title="Save"
         color="#841584"
       />
